@@ -1,0 +1,50 @@
+
+
+name: Build macOS App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install py2app PyQt5 numpy opencv-python PyMuPDF
+
+      - name: Create setup.py
+        run: |
+          echo "from setuptools import setup" > setup.py
+          echo "APP = ['detect.py']" >> setup.py
+          echo "OPTIONS = {" >> setup.py
+          echo "    'argv_emulation': True," >> setup.py
+          echo "    'packages': ['PyQt5', 'numpy', 'cv2', 'fitz']" >> setup.py
+          echo "}" >> setup.py
+          echo "setup(" >> setup.py
+          echo "    app=APP," >> setup.py
+          echo "    options={'py2app': OPTIONS}," >> setup.py
+          echo "    setup_requires=['py2app']" >> setup.py
+          echo ")" >> setup.py
+
+      - name: Build macOS app with py2app
+        run: |
+          python setup.py py2app
+
+      - name: Upload .app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PdfToImage-macOS
+          path: dist/*.app
