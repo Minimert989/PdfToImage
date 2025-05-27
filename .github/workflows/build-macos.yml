@@ -43,6 +43,17 @@ jobs:
         run: |
           python setup.py py2app
 
+      - name: Patch OpenCV dylib dependencies
+        run: |
+          brew install ffmpeg
+          mkdir -p dist/detect.app/Contents/Resources/lib/python3.10/cv2/.dylibs
+          cp /opt/homebrew/opt/ffmpeg/lib/*.dylib dist/detect.app/Contents/Resources/lib/python3.10/cv2/.dylibs || true
+          chmod +w dist/detect.app/Contents/Resources/lib/python3.10/cv2/cv2.abi3.so
+          install_name_tool -change \
+            @rpath/libavcodec.61.19.100.dylib \
+            @loader_path/.dylibs/libavcodec.61.19.100.dylib \
+            dist/detect.app/Contents/Resources/lib/python3.10/cv2/cv2.abi3.so || true
+
       - name: Upload .app bundle
         uses: actions/upload-artifact@v4
         with:
